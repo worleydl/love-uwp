@@ -547,7 +547,10 @@ std::string Filesystem::getAppdataDirectory()
 {
 	if (appdata.empty())
 	{
-#ifdef LOVE_WINDOWS_UWP
+#if 1
+		// todo: this might need app specifics at some point, for now just get something working
+		appdata = "E:\\_love";
+#elif  LOVE_WINDOWS_UWP
 		appdata = getUserDirectory();
 #elif defined(LOVE_WINDOWS)
 		wchar_t *w_appdata = _wgetenv(L"APPDATA");
