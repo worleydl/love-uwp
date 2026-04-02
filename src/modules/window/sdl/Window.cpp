@@ -240,6 +240,9 @@ std::vector<Window::ContextAttribs> Window::getContextAttribsList() const
 		preferGLES = (gleshint != nullptr && gleshint[0] != '0');
 	}
 
+	// uwp: force prefer gles to off (you could try angle but it performs worse)
+	preferGLES = false;
+
 	// Do we want a debug context?
 	bool debug = love::graphics::isDebugEnabled();
 
