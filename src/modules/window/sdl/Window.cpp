@@ -1068,7 +1068,8 @@ void Window::swapBuffers()
 #ifdef LOVE_WINDOWS
 	if (useDwmFlush)
 	{
-		DwmFlush();
+		// uwp: dwmflush not exported
+		//DwmFlush();
 		SDL_GL_SetSwapInterval(swapInterval);
 	}
 #endif

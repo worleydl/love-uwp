@@ -27,7 +27,7 @@ cmake_minimum_required(VERSION 3.1)
 
 project(love)
 
-set(LOVE_EXE_NAME love)
+set(LOVE_EXE_NAME lovestatic)
 set(LOVE_LIB_NAME liblove)
 
 set(CMAKE_MODULE_PATH "${love_SOURCE_DIR}/extra/cmake" ${CMAKE_MODULE_PATH})
@@ -1801,9 +1801,18 @@ endif()
 #
 # love (executable)
 #
-add_executable(${LOVE_EXE_NAME} WIN32 src/love.cpp ${LOVE_RC})
+#add_executable(${LOVE_EXE_NAME} WIN32 src/love.cpp ${LOVE_RC})
+add_library(${LOVE_EXE_NAME} STATIC src/love.cpp)
 target_link_libraries(${LOVE_EXE_NAME} ${LOVE_LIB_NAME})
 set_target_properties(${LOVE_EXE_NAME} PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN ON)
+
+if(MSVC)
+	# All the deps are /MT but we need the static lib to be /MD for the final exe
+	target_compile_options(${LOVE_EXE_NAME} PRIVATE
+		$<$<CONFIG:Debug>:/MDd>
+		$<$<CONFIG:Release>:/MD>
+	)
+endif()
 
 if(MSVC OR MINGW)
 	add_executable(${LOVE_CONSOLE_EXE_NAME} src/love.cpp ${LOVE_RC})
@@ -1829,7 +1838,7 @@ endfunction()
 # running/debugging the binary will not work from inside VS.
 if(LOVE_MOVE_DLLS)
 	foreach(DLL ${LOVE_MOVE_DLLS})
-		post_step_move_dll(love ${DLL})
+		post_step_move_dll(lovestatic ${DLL})
 	endforeach()
 endif()
 
