@@ -27,6 +27,11 @@
 
 #ifdef LOVE_BUILD_EXE
 
+#ifdef _UWP
+#define SDL_MAIN_HANDLED
+#define SDL_MAIN_NEEDED
+#endif
+
 #include <SDL3/SDL_main.h>
 
 // Lua

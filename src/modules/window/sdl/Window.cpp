@@ -61,6 +61,11 @@
 #define APIENTRY
 #endif
 
+#ifdef _UWP
+extern "C" __declspec(dllimport) void uwp_GetScreenSize(int* x, int* y);
+extern "C" __declspec(dllimport) void uwp_SetScreenSize(int x, int y);
+#endif
+
 namespace love
 {
 namespace window
@@ -243,6 +248,11 @@ std::vector<Window::ContextAttribs> Window::getContextAttribsList() const
 	const char *gleshint = SDL_GetHint("LOVE_GRAPHICS_USE_OPENGLES");
 	if (gleshint != nullptr)
 		preferGLES = (gleshint != nullptr && gleshint[0] != '0');
+
+#ifdef _UWP
+	// Gallium gives better performance than angle in most cases
+	preferGLES = false;
+#endif
 
 	// Do we want a debug context?
 	bool debug = love::graphics::isDebugEnabled();
@@ -479,6 +489,16 @@ static SDL_DisplayID GetSDLDisplayIDForIndex(int displayindex)
 
 bool Window::setWindow(int width, int height, WindowSettings *settings)
 {
+#ifdef _UWP
+	uwp_SetScreenSize(width, height);
+	if (window) {
+		WindowSettings f;
+		f = *settings;
+		graphics->setMode((void*) glcontext, width, height, width, height, f.stencil, f.depth, f.msaa);
+		return true;
+	}
+#endif
+
 	if (!graphics.get())
 		graphics.set(Module::getInstance<graphics::Graphics>(Module::M_GRAPHICS));
 
@@ -546,6 +566,7 @@ bool Window::setWindow(int width, int height, WindowSettings *settings)
 	Uint32 sdlflags = 0;
 	SDL_DisplayMode fsmode = {};
 
+#ifndef _UWP
 	if (f.fullscreen)
 	{
 		sdlflags |= SDL_WINDOW_FULLSCREEN;
@@ -568,6 +589,7 @@ bool Window::setWindow(int width, int height, WindowSettings *settings)
 			}
 		}
 	}
+#endif
 
 	bool needsetmode = false;
 
@@ -721,12 +743,18 @@ void Window::updateSettings(const WindowSettings &newsettings, bool updateGraphi
 	Uint32 wflags = SDL_GetWindowFlags(window);
 
 	// Set the new display mode as the current display mode.
+#ifndef _UWP
 	SDL_GetWindowSize(window, &windowWidth, &windowHeight);
+#else
+	uwp_GetScreenSize(&windowWidth, &windowHeight);
+#endif
 
 	pixelWidth = windowWidth;
 	pixelHeight = windowHeight;
 
+#ifndef _UWP
 	SDL_GetWindowSizeInPixels(window, &pixelWidth, &pixelHeight);
+#endif
 
 	if (((wflags & SDL_WINDOW_FULLSCREEN) == SDL_WINDOW_FULLSCREEN) && SDL_GetWindowFullscreenMode(window) == nullptr)
 	{
@@ -1268,7 +1296,7 @@ void Window::swapBuffers()
 
 		SDL_GL_SwapWindow(window);
 
-#ifdef LOVE_WINDOWS
+#if defined(LOVE_WINDOWS) && !defined(_UWP)
 		if (useDwmFlush)
 		{
 			DwmFlush();
@@ -1617,7 +1645,11 @@ void Window::showFileDialog(const FileDialogData &data, FileDialogCallback callb
 
 	SDL_SetBooleanProperty(state->props, SDL_PROP_FILE_DIALOG_MANY_BOOLEAN, data.multiSelect);
 
+#ifndef _UWP
 	SDL_ShowFileDialogWithProperties(sdltype, fileDialogCallbackSDL, state, state->props);
+#else
+	// todo: show the basic file selector/update SDL3 with the missing impl above
+#endif
 }
 
 void Window::requestAttention(bool continuous)

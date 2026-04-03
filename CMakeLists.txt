@@ -291,6 +291,7 @@ add_library(love_common STATIC
 	src/common/version.h
 )
 target_link_libraries(love_common PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}/libuwp.lib
 	lovedep::Lua
 	lovedep::SDL
 )
@@ -1993,7 +1994,17 @@ if(ANDROID)
 	add_library(love SHARED) # On Android, the LOVE main entrypoint needs to be compiled as shared library
 	target_link_libraries(liblove android)
 else()
-	add_executable(love WIN32)
+	add_library(love STATIC)
+	#add_executable(love WIN32)
+endif()
+
+if(MSVC)
+	# For UWP, all of the deps are /MT but we need the static lib to be /MD for the final exe
+	add_compile_definitions(_UWP)
+	target_compile_options(${LOVE_EXE_NAME} PRIVATE
+		$<$<CONFIG:Debug>:/MDd>
+		$<$<CONFIG:Release>:/MD>
+	)
 endif()
 
 target_sources(love PRIVATE src/love.cpp)

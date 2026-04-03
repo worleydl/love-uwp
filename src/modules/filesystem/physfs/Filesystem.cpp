@@ -642,6 +642,10 @@ std::string Filesystem::getFullCommonPath(CommonPath path)
 		break;
 	}
 
+#elif defined(_UWP)
+	std::string uwpExternal = "E:\\_love";
+	fullPaths[path] = uwpExternal;
+
 #elif defined(LOVE_WINDOWS)
 
 	PWSTR winpath = nullptr;
