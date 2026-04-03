@@ -54,6 +54,9 @@
 #define APIENTRY
 #endif
 
+extern "C" __declspec(dllimport) void uwp_GetScreenSize(int* x, int* y);
+extern "C" __declspec(dllimport) void uwp_SetScreenSize(int x, int y);
+
 namespace love
 {
 namespace window
@@ -422,6 +425,15 @@ bool Window::createWindowAndContext(int x, int y, int w, int h, Uint32 windowfla
 
 bool Window::setWindow(int width, int height, WindowSettings *settings)
 {
+	// uwp: mesa doesn't currently like recreating context, reuse window & resize with libuwp bridge
+	if (window) {
+		WindowSettings f;
+		f = *settings;
+		graphics->setMode(width, height, width, height, f.stencil);
+		uwp_SetScreenSize(width, height);
+		return true;
+	}
+
 	if (!graphics.get())
 		graphics.set(Module::getInstance<graphics::Graphics>(Module::M_GRAPHICS));
 
@@ -654,8 +666,12 @@ void Window::getWindow(int &width, int &height, WindowSettings &newsettings)
 	if (window)
 		updateSettings(settings, true);
 
+#if 0
 	width = windowWidth;
 	height = windowHeight;
+#else
+	uwp_GetScreenSize(&width, &height);
+#endif
 	newsettings = settings;
 }
 
