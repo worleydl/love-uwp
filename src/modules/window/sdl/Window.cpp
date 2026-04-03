@@ -426,13 +426,14 @@ bool Window::createWindowAndContext(int x, int y, int w, int h, Uint32 windowfla
 bool Window::setWindow(int width, int height, WindowSettings *settings)
 {
 	// uwp: mesa doesn't currently like recreating context, reuse window & resize with libuwp bridge
+	uwp_SetScreenSize(width, height);
 	if (window) {
 		WindowSettings f;
 		f = *settings;
 		graphics->setMode(width, height, width, height, f.stencil);
-		uwp_SetScreenSize(width, height);
 		return true;
 	}
+	// end uwp hack
 
 	if (!graphics.get())
 		graphics.set(Module::getInstance<graphics::Graphics>(Module::M_GRAPHICS));
@@ -474,7 +475,7 @@ bool Window::setWindow(int width, int height, WindowSettings *settings)
 	f.fstype = FULLSCREEN_DESKTOP;
 #endif
 
-	if (f.fullscreen)
+	if (f.fullscreen && 0) // use libuwp bridge instead
 	{
 		if (f.fstype == FULLSCREEN_DESKTOP)
 			sdlflags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
@@ -591,8 +592,13 @@ void Window::updateSettings(const WindowSettings &newsettings, bool updateGraphi
 	Uint32 wflags = SDL_GetWindowFlags(window);
 
 	// Set the new display mode as the current display mode.
+#if 0
 	SDL_GetWindowSize(window, &windowWidth, &windowHeight);
 	SDL_GL_GetDrawableSize(window, &pixelWidth, &pixelHeight);
+#else
+	uwp_GetScreenSize(&windowWidth, &windowHeight);
+	uwp_GetScreenSize(&pixelWidth, &pixelHeight);
+#endif
 
 	if ((wflags & SDL_WINDOW_FULLSCREEN_DESKTOP) == SDL_WINDOW_FULLSCREEN_DESKTOP)
 	{
